@@ -1,5 +1,7 @@
 /dataset/rawdata/
 /dataset/output/
 /dataset/Code/
+/dataset/dataprocess/.idea/
+/dataset/dataprocess/.vscode/
 
 /BCLS-master/

@@ -1,27 +1,28 @@
-
-function [Y, minO, iter_num, obj, elapsed_time] = CDKM(X, label,c)
-% Input
-% X d*n data
-% label is initial label n*1
-% c is the number of clusters
 % code for F. Nie, J. Xue, D. Wu, R. Wang, H. Li, and X. Li,
 %¡°Coordinate descent method for k-means,¡± IEEE Transactions on Pattern Analysis and Machine Intelligence, 2021
+
+
+function [Y, minO, iter_num, obj, elapsed_time] = CDKM(X, label, k)
+% Input
+%   X: data matrix (d*n)
+%   label: the initial assignment label (n*1)
+%   k: the number of clusters
 % Output
-% Y is the label vector n*1
-% minO is the Converged objective function value
-% iter_num is the number of iteration
-% obj is the objective function value
-% It is written by Jingjing Xue
+%   Y: the final assignment label vector (n*1)
+%   minO: the objective function value when converged
+%   iter_num: the number of iteration
+%   obj: the objective function value
+
 fprintf("CDKM\n");
 
-run_time = tic;
+start_time = tic;
 
 [~,n] = size(X);
-F = sparse(1:n,label,1,n,c,n);  % transform label into indicator matrix 
+F = sparse(1:n,label,1,n,k,n);  % transform label into indicator matrix 
 last = 0;
 iter_num = 0;
 %% compute Initial objective function value
-for ii=1:c
+for ii=1:k
         idxi = find(label==ii);
         Xi = X(:,idxi);     
         ceni = mean(Xi,2); 
@@ -49,7 +50,7 @@ for iter =1:200
     if aa(m)==1
         continue;  
     end 
-    for k = 1:c        
+    for k = 1:k        
         if k == m   
            V1(k) = FXXF(k,k)- 2 * X(:,i)'* BB(:,k) + XX(i);
            delta(k) = FXXF(k,k) / aa(k) - V1(k) / (aa(k) -1); 
@@ -71,7 +72,7 @@ for iter =1:200
  end 
     iter_num = iter_num+1;
     %% compute objective function value
-    for ii=1:c
+    for ii=1:k
         idxi = find(label==ii);
         Xi = X(:,idxi);
         ceni = mean(Xi,2);
@@ -82,7 +83,7 @@ for iter =1:200
     end
     obj(iter_num+1) = sum(sumd) ;     %  objective function value
 end
-elapsed_time = toc(run_time);
+elapsed_time = toc(start_time);
 
 disp(['Elapsed time: ', num2str(elapsed_time)]);
 minO=min(obj);
