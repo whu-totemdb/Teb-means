@@ -17,7 +17,7 @@ fprintf("BANCDKM_Ji\n");
 % 记录每次运行的开始时间
 run_time = tic;
 
-[~,n] = size(X);
+[~,n] = size(X);z    
 F = sparse(1:n,label,1,n,c,n);  % transform label into indicator matrix
 last = 0;
 iter_num = 0;
