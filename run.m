@@ -6,8 +6,7 @@ clc
 num_runs = 3;
 
 % 1.comparison algorithms
-methods = { 'SIFF_eta', 'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'SIFF' };
-% methods = { 'SIFF_eta', 'CDKM', 'FCFC', 'BCLS_ALM', 'Lloyd', 'F3KM', 'SIFF' };
+methods = {'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'Teb' };
 
 % 2.datasets
 datasets = {'1-epsilon', '2-svmlight', '3-athlete', '4-Spanish', '5-hmda', '6-census1990', 'ori-disease', 'ori-Crime'};
@@ -21,8 +20,7 @@ clusters_size = {3};
 
 
 % 5.different rho/eta value
-% eta_set = [0.83];
-eta_set = 0.79:0.01:0.86;
+eta_set = [0.83];
  
 % 6.block size
 % blocks_size = [1,2,4,8,16,32,64,128,256,512];
@@ -51,7 +49,7 @@ for dataset_idx = 1:length(datasets)
             threads = threads_num;
 
             % 4th loop: methods
-            for method_idx = 7:7
+            for method_idx = 1:6
                 method_name = methods{method_idx};
 
                 % 5th loop: rho/eta
@@ -69,12 +67,8 @@ for dataset_idx = 1:length(datasets)
                         if l >= 5000
                             X = X(:, 1:5000);
                         end
-
-                        if dataset_idx == 7
-                            X = [X(60:75, :);X(495:560, :);X(650:655, :);X(85:90, :);X(465:470, :);X(125:130, :)];
-                        end
                         [~,l] = size(X);
-      
+
                         iter = 200;
 
                         % Initialize variables for averaging
@@ -98,15 +92,9 @@ for dataset_idx = 1:length(datasets)
       
                             % Delete any existing parallel pool
                             delete(gcp('nocreate'));
-           
+
                             % Call the method dynamically
                             switch method_name
-                                case 'SIFF_eta'
-                                    rho = (1 - eta) / eta;
-                                    fprintf('Block size: %d\n', block_size);
-%                                     fprintf('============ eta: %.6f, rho: %.6f ============\n', eta, rho);
-                                    [Y_label, ~, iter_num, obj_max, balance_loss, elapsed_time] = SIFF_eta(X, label, c, block_size, eta, iter);
-                                    loss = NaN;
                                 case 'Lloyd'
                                     [Y_label, ~, iter_num, obj_max, balance_loss, elapsed_time, size0] = Lloyd(X, label, c, iter);
                                     sse = obj_max;
@@ -145,8 +133,8 @@ for dataset_idx = 1:length(datasets)
                                     rho = 0.15;
                                     [Y_label, ~, iter_num, sse, obj, balance_loss, elapsed_time, size0] = F3KM(X, label, c, block_size, rho, threads, iter);
                                     loss = NaN;
-                                case 'SIFF'
-                                    [Y_label, ~, iter_num, sse, obj_max, balance_loss, elapsed_time, size0] = SIFF_eta(X, label, c, block_size, eta, iter);
+                                case 'Teb'
+                                    [Y_label, ~, iter_num, sse, obj_max, balance_loss, elapsed_time, size0] = Teb(X, label, c, block_size, eta, iter);
                                     loss = NaN;
                             end
 
@@ -198,9 +186,8 @@ for dataset_idx = 1:length(datasets)
                         [~, data_name, ext] = fileparts(file_path);
                         file_name_with_ext = strcat(data_name, ext);
   
-                        % 创建文件夹
-                        if ~exist(method_name, 'dir') % 检查文件夹是否已存在
-                            mkdir(method_name); % 创建文件夹
+                        if ~exist(method_name, 'dir')
+                            mkdir(method_name);
                         end
 
                     end

@@ -1,5 +1,5 @@
 
-function [Y, minO, iter_num, sse, obj, balance_loss, runtime, cluster_size] = SIFF_eta(X, label, c, block_size, eta, max_iters)
+function [Y, minO, iter_num, sse, obj, balance_loss, runtime, cluster_size] = Teb(X, label, c, block_size, eta, max_iters)
 
 % parpool("local",4);
 
@@ -99,7 +99,7 @@ runtime = toc(start_time);
 for ii = 1:c
     cluster_size(ii) = sum(label == ii);
 end
-% fprintf('SIFF runtime: %.4f seconds, sse: %.4f, balance loss: %.4f\n', runtime, sse(end), mean(balance_loss(end-4:end)));
+% fprintf('Teb runtime: %.4f seconds, sse: %.4f, balance loss: %.4f\n', runtime, sse(end), mean(balance_loss(end-4:end)));
 
 % delete(gcp('nocreate'))
 end
