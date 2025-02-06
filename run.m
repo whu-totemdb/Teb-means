@@ -2,165 +2,214 @@
 clear all
 clc
 
-% Define the methods to test % f3km
-methods = { 'CDKM', 'DBANCDKM'};
+% 0.test time
+num_runs = 3;
 
-% Define the datasets to use
-datasets = {'athlete', 'bank', 'census', 'creditcard', 'diabetes', 'recruitment', 'Spanish', 'yelp_academic_dataset_business'};
+% 1.comparison algorithms
+methods = { 'SIFF_eta', 'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'SIFF' };
+% methods = { 'SIFF_eta', 'CDKM', 'FCFC', 'BCLS_ALM', 'Lloyd', 'F3KM', 'SIFF' };
 
-clusters_sets = {4, 20, 40, 60, 80, 100};
-% Number of runs for averaging
-num_runs = 1;
-% clusters_sets = {4};
+% 2.datasets
+datasets = {'1-epsilon', '2-svmlight', '3-athlete', '4-Spanish', '5-hmda', '6-census1990', 'ori-disease', 'ori-Crime'};
 
-% Parameters for methods that require them
-rho_set = [0.5];
-point_max = [10000];
-threads_set = 3;
-clusters_set = 20;
-epsilon_set = [0.1,0.5,1,2,3,4,5,6,7,8,9,10];
+% 3.thread number
+threads_set = 1;
 
-for method_idx = 8:length(datasets)
-    method_name = methods{method_idx};
-    % Create the result file name
-    result_file_name = ['result_', method_name, '.csv'];
-    % Open the result file for appending
-    fid = fopen(result_file_name, 'a');
-  
-    % Write the header if the file is new
-    if ftell(fid) == 0
-        fprintf(fid, 'data_name,Clusters num,Average time,iterations,objective function value,Time Std,Obj Std,num-thr,rho,Average clusters size\n');
-    end
-
-    % Loop over each dataset
+% 4.the k value size
+% clusters_size = {3,4,5,6,7,8,9,10};
+clusters_size = {3};
 
 
-    for iter_dataset = 1:length(datasets)
-        dataset_name = datasets{iter_dataset};
+% 5.different rho/eta value
+% eta_set = [0.83];
+eta_set = 0.79:0.01:0.86;
+ 
+% 6.block size
+% blocks_size = [1,2,4,8,16,32,64,128,256,512];
+blocks_size = [8];
+
+
+result_file_name2 = 'obj-iter200.csv';
+fid_time = fopen(result_file_name2, 'a');
+% fprintf(fid_time, '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n', 'dataset', 'k', 'method', ' MEAN_SSE', 'VAR_SSE', 'MEAN_BALANCE_LOSS', 'VAR_BALANCE_LOSS', 'MEAN_CV', 'MEAN_Nentro', 'MEAN_TIME');
+fprintf(fid_time, '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n', 'dataset', 'block size', 'method', ' MEAN_SSE', 'VAR_SSE', 'MEAN_BALANCE_LOSS', 'VAR_BALANCE_LOSS', 'MEAN_CV', 'MEAN_Nentro', 'MEAN_TIME');
+% fprintf(fid_time, '%s,%s,%s,%s,%s\n', 'dataset', 'eta', 'obj value', 'balance loss', 'SSE');
+
+
+% 1st loop: dataset
+for dataset_idx = 1:length(datasets)
+    dataset_name = datasets{dataset_idx};
+    fprintf('Running on dataset %s\n', dataset_name);
+    
+    % 2nd loop: k value
+    for iter_cluster = 1:length(clusters_size)
+        c = clusters_size{iter_cluster};
+        fprintf('k: %d \n', c);
+
+        % 3rd loop: thread number
         for threads_num = threads_set
-            threads = threads_num; % Set the number of threads
-            for iter_cluster = 1:length(clusters_sets)
-                c = clusters_sets{iter_cluster};
-                for point_idx = 1:length(point_max)
-                    max_points = point_max(point_idx);
-                    for rho_idx = 1:length(rho_set)
-                        rho = rho_set(rho_idx);
-                        for epsilon_idx = 1:length(epsilon_set)
-                            epsilon = epsilon_set(epsilon_idx); 
-                            % Construct the file path and load data
-                            file_path = strcat('D:\BalanceKMeams\k-means\Code\Data\individually-fair-k-clustering-main\individually-fair-k-clustering-main\yelp\output\', dataset_name, '_', num2str(max_points), '_', num2str(c), '.csv');
-                            X = csvread(file_path, 1, 1)';
-    
-                            % Initialize variables for averaging
-                            avg_obj_max = 0;
-                            avg_iter_num = 0;
-                            avg_time = 0;
-                            avg_cluster_sizes = zeros(1, c);
-                            avg_loss = zeros(1, 100);
-    
-                            time_record = zeros(1, num_runs);
-                            obj_record = zeros(1, num_runs);
-                            loss_record = zeros(1, num_runs);
-    
-                            for ite_run = 1:num_runs
-                                fprintf('Running %s on dataset %s, run %d\n', method_name, dataset_name, ite_run);
-                                % Initialize labels
-                                rng(42 + ite_run);
-                                label = kmeans(X', c);
-    
-                                % Delete any existing parallel pool
-                                delete(gcp('nocreate'));
-    
-                                % Call the method dynamically
-                                switch method_name
-                                    case 'CDKM'
-                                        [Y_label, ~, iter_num, obj_max, elapsed_time] = CDKM(X, label, c);
-                                        loss = NaN;
-                                end
-    
-                                % Aggregate results
-                                if isnan(iter_num)
-                                    avg_obj_max = avg_obj_max + obj_max;
-                                else
-                                    avg_obj_max = avg_obj_max + obj_max(iter_num);
-                                end
-                                avg_iter_num = avg_iter_num + iter_num;
-                                avg_time = avg_time + elapsed_time;
-    
-                                time_record(ite_run) = elapsed_time;
-                                if isnan(iter_num)
-                                    obj_record(ite_run) = obj_max;
-                                else
-                                    obj_record(ite_run) = obj_max(iter_num);
-                                end
-                                if ~isnan(loss)
-                                    loss_record(ite_run) = loss(iter_num - 1);
-                                end
-    
-                                % Compute cluster sizes
-                                for ii = 1:c
-                                    avg_cluster_sizes(ii) = avg_cluster_sizes(ii) + sum(Y_label == ii);
-                                end
-    
-                                % Aggregate loss if applicable
-                                if ~isnan(loss)
-                                    for ii = 1:iter_num
-                                        avg_loss(ii) = avg_loss(ii) + loss(ii);
-                                    end
-                                end
+            threads = threads_num;
+
+            % 4th loop: methods
+            for method_idx = 7:7
+                method_name = methods{method_idx};
+
+                % 5th loop: rho/eta
+                for eta_idx = 1:length(eta_set)
+                    eta = eta_set(eta_idx);
+
+                    % 6th loop: block size
+                    for block_size_idx = 1:length(blocks_size)
+                        block_size = blocks_size(block_size_idx);
+
+                        % Construct the file path and load data
+                        file_path = strcat('dataset/output/', dataset_name,'.csv');
+                        X = csvread(file_path, 1, 1)';
+                        [~,l] = size(X);
+                        if l >= 5000
+                            X = X(:, 1:5000);
+                        end
+
+                        if dataset_idx == 7
+                            X = [X(60:75, :);X(495:560, :);X(650:655, :);X(85:90, :);X(465:470, :);X(125:130, :)];
+                        end
+                        [~,l] = size(X);
+      
+                        iter = 200;
+
+                        % Initialize variables for averaging
+                        SSEs = zeros(1, num_runs);
+                        BALANCE_LOSSs = zeros(1, num_runs);
+                        CVs = zeros(1, num_runs);
+                        Nentros = zeros(1, num_runs);
+                        TIMEs = zeros(1, num_runs);
+
+                        % data in each iteration
+                        iter_SSEs = zeros(num_runs, iter);
+                        iter_BLs = zeros(num_runs, iter);
+
+                        for ite_run = 1:num_runs
+%                             fprintf('Running %s on dataset %s, run %d\n', method_name, dataset_name, ite_run);
+                            % Initialize labels
+                            seed = 3 + ite_run;
+                            rng(seed);
+                            fprintf('seed: %d   ', seed);
+                            label = kmeans(X', c);
+      
+                            % Delete any existing parallel pool
+                            delete(gcp('nocreate'));
+           
+                            % Call the method dynamically
+                            switch method_name
+                                case 'SIFF_eta'
+                                    rho = (1 - eta) / eta;
+                                    fprintf('Block size: %d\n', block_size);
+%                                     fprintf('============ eta: %.6f, rho: %.6f ============\n', eta, rho);
+                                    [Y_label, ~, iter_num, obj_max, balance_loss, elapsed_time] = SIFF_eta(X, label, c, block_size, eta, iter);
+                                    loss = NaN;
+                                case 'Lloyd'
+                                    [Y_label, ~, iter_num, obj_max, balance_loss, elapsed_time, size0] = Lloyd(X, label, c, iter);
+                                    sse = obj_max;
+                                    loss = NaN;
+                                case 'CDKM'
+                                    [Y_label, ~, iter_num, obj_max, balance_loss, elapsed_time, size0] = CDKM(X, label, c, iter);
+                                    sse = obj_max;
+                                    loss = NaN;
+                                case 'FCFC'
+                                    [Y_label, ~, sse, balance_loss, elapsed_time, size0] = FCFC(X', label, c, 0.001, iter);
+                                    loss = NaN;
+                                case 'BCLS_ALM'
+                                    base_dir = 'E:\f-means\siff-means\';
+                                    tmp_dir = [base_dir 'BCLS_ALM/'];
+                                    % Parameter setting
+                                    gamma = 10^(-5);    % the value of Gamma should be between 0 and 10^(-10)
+                                    lam = 10^(1);
+                                    mu = 1;
+                                    infRes = 0.90;      % the percentage of information reserved of the data during PCA dimension reduction
+                                    save([tmp_dir 'param.mat']);
+
+                                    initialization(X, c, tmp_dir, infRes);
+                                    load([tmp_dir 'init.mat']);
+                                    [d,n] = size(X);
+
+                                    StartInd = randsrc(n,1,1:c);
+                                    Y0 = TransformL(StartInd, c);
+                                    save([tmp_dir 'Y0'], 'Y0');
+                                    load([tmp_dir 'Y0']);
+
+                                    [Y_label, ~, sse, balance_loss, elapsed_time, size0] = BCLS_ALM(X, Y0, iter, gamma, lam, mu);
+
+
+                                    loss = NaN;
+                                case 'F3KM'
+                                    rho = 0.15;
+                                    [Y_label, ~, iter_num, sse, obj, balance_loss, elapsed_time, size0] = F3KM(X, label, c, block_size, rho, threads, iter);
+                                    loss = NaN;
+                                case 'SIFF'
+                                    [Y_label, ~, iter_num, sse, obj_max, balance_loss, elapsed_time, size0] = SIFF_eta(X, label, c, block_size, eta, iter);
+                                    loss = NaN;
+                            end
+
+                            % get balance loss, cv and entro
+%                             balance_loss = 0;
+                            entro = 0;
+                            cv = 0;
+                            for jj = 1:c
+%                                 balance_loss = balance_loss + (size0(jj) - l/c)^2;
+                                entro = entro + size0(jj)/l * log(size0(jj)/l);
+                                cv = cv + sqrt((size0(jj) - l/c)^2);
                             end
     
-                            % Compute averages
-                            avg_obj_max = avg_obj_max / num_runs;
-                            avg_iter_num = avg_iter_num / num_runs;
-                            avg_time = avg_time / num_runs;
-                            avg_cluster_sizes = avg_cluster_sizes / num_runs;
-                            avg_loss = avg_loss / num_runs;
-    
-                            % Compute standard deviations
-                            standard_deviation_time = std(time_record);
-                            standard_deviation_obj = std(obj_record);
-    
-                            % Prepare the data for output
-                            [~, data_name, ext] = fileparts(file_path);
-                            file_name_with_ext = strcat(data_name, ext);
-    
-                            % Handle parameters specific to certain methods
-                            if ismember(method_name, {'DBANCDKM', 'DBANCDKM_DP'})
-                                num_threads = threads;
-                                rho_value = rho;
+                            % data in the last iteration
+                            SSEs(ite_run) = sse(end);
+                            BALANCE_LOSSs(ite_run) = mean(balance_loss(end-4:end));
+                            CVs(ite_run) = c/l * cv;
+                            Nentros(ite_run) = - entro / log(c);
+                            TIMEs(ite_run) = elapsed_time;
+
+                            % data in each iteration
+                            iter_SSEs(ite_run, :) = sse;
+                            iter_BLs(ite_run, :) = balance_loss;
+                        end
+
+% 'dataset', 'k', 'method', ' MEAN_SSE', 'VAR_SSE', 'MEAN_BALANCE_LOSS', 'VAR_BALANCE_LOSS', 'MEAN_CV', 'MEAN_Nentro', 'MEAN_TIME'
+
+                        % data in the last iteration
+%                         fprintf(fid_time, '%s,%d,%s,', dataset_name, block_size, method_name);
+%                         fprintf(fid_time, '%.5f,%.5f,', mean(SSEs), var(SSEs));
+%                         fprintf(fid_time, '%.5f,%.5f,', mean(BALANCE_LOSSs), var(BALANCE_LOSSs));
+%                         fprintf(fid_time, '%.5f,%.5f,%.5f\n', mean(CVs), mean(Nentros), mean(TIMEs));
+                        
+                        % data in each iteration
+                        iter_SSEs = mean(iter_SSEs, 1);
+                        iter_BLs = mean(iter_BLs, 1);
+                        for ii = 1:iter
+                            if ii ~= iter
+                                fprintf(fid_time, '%.5f,', iter_SSEs(ii) + iter_BLs(ii));
                             else
-                                num_threads = NaN;
-                                rho_value = NaN;
+                                fprintf(fid_time, '%.5f\n', iter_SSEs(ii) + iter_BLs(ii));
                             end
-    
-                            % Write the results to the file
-                            fprintf(fid, '%s,%d,%.4f,%.2f,%.2f,%.2f,%.2f,', file_name_with_ext, c, avg_time, avg_iter_num, avg_obj_max, standard_deviation_time, standard_deviation_obj);
-                            fprintf(fid, '%.2f,%.2f', num_threads, rho_value);
-                            if method_idx == 5  || method_idx == 7
-                                fprintf(fid, ',%f', epsilon);
-                            end
-                            for ii = 1:c
-                                fprintf(fid, ',%.2f', avg_cluster_sizes(ii));
-                            end
-                            if ~isnan(loss)
-                                for ii = 1:length(avg_loss)
-                                    if avg_loss(ii) == 0
-                                        break;
-                                    end
-                                    fprintf(fid, ',%.2f', avg_loss(ii));
-                                end
-                            end
-                            fprintf(fid, '\n');
-                         end 
+                        end
+%                         fprintf(fid_time, '%s,%.4f,%.4f,%.4f,%.4f\n', dataset_name, eta, mean(SSEs)+mean(BALANCE_LOSSs), mean(BALANCE_LOSSs), mean(SSEs));
+%                         fprintf('%s,%.4f,%.4f,%.4f,%.4f\n', dataset_name, eta, mean(SSEs)+mean(BALANCE_LOSSs), mean(BALANCE_LOSSs), mean(SSEs));
+
+
+                        % Prepare the data for output
+                        [~, data_name, ext] = fileparts(file_path);
+                        file_name_with_ext = strcat(data_name, ext);
+  
+                        % 创建文件夹
+                        if ~exist(method_name, 'dir') % 检查文件夹是否已存在
+                            mkdir(method_name); % 创建文件夹
+                        end
+
                     end
                 end
             end
         end
     end
-
-    fclose(fid);
 end
+fclose(fid_time);
 
 
 

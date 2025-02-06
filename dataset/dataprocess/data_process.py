@@ -48,7 +48,8 @@ def read_list(config_string, delimiter=','):
 
 def process(config_str, example_config):
     print("Using config_str = {}".format(config_str))
-
+    print("Config:", example_config.sections())
+    print("Config string:", config_str)
     # get parameters from example_config.ini
     data_dir = example_config[config_str].get("data_dir")
     dataset = example_config[config_str].get("dataset")
@@ -64,7 +65,7 @@ def process(config_str, example_config):
     dataset_config.read(clustering_config_file)
     csv_file = dataset_config[dataset]["csv_file"]
 
-    max_points = 10000  # max data scale
+    max_points = 100000  # max data scale
 
     # read the data
     df = pd.read_csv(csv_file, sep=dataset_config[dataset]["separator"])
@@ -126,10 +127,11 @@ if __name__ == '__main__':
     example_config.read(config_file)
 
     # Create your own entry in `example_config.ini` and change this str to run
-    # dataset_list = ["Spanish", "census1990", "hmda"]
+    # dataset_list = ["census1990", "hmda"]
     # dataset_list = ["UCI_Credit_Card", "adult_data"]
     # dataset_list = ["svmlight", "bank"]
-    dataset_list = ["epsilon", "give_credit"]
+    # dataset_list = ["Crime", "disease"]
+    dataset_list = ["CO"]
 
     for dataset in dataset_list:
         process(dataset, example_config)

@@ -2,7 +2,7 @@
 %¡°Coordinate descent method for k-means,¡± IEEE Transactions on Pattern Analysis and Machine Intelligence, 2021
 
 
-function [Y, minO, iter_num, obj, runtime] = CDKM(X, label, k)
+function [Y, minO, iter_num, obj, balance_loss, runtime, size0] = CDKM(X, label, k, max_iter)
 % Input
 %   X: data matrix (d*n)
 %   label: the initial assignment label (n*1)
@@ -14,39 +14,35 @@ function [Y, minO, iter_num, obj, runtime] = CDKM(X, label, k)
 %   obj: the objective function value in each iteration
 %   runtime: the total runtime of CDKM
 
-fprintf("CDKM\n");
+% fprintf("CDKM\n");
 start_time = tic;
 
 [~,n] = size(X);
 F = sparse(1:n, label, 1, n, k, n);     % transform label into indicator matrix (n*k)
-last = 0;
 iter_num = 0;
 
-%% compute Initial objective function value
+%% compute initial objective function value
 for ii = 1:k
     idxi = find(label == ii);
     Xi = X(:, idxi);
-    m = size(Xi, 2);
     ceni = mean(Xi, 2);     % the i-th centroid (d*1)
     center(:, ii) = ceni;   % the centroid matrix (d*k)
     c2 = ceni'*ceni;
-    sse_i = sum(Xi.^2) + m*c2 - 2*ceni'*Xi;
+    sse_i = sum(Xi.^2) + c2 - 2*ceni'*Xi;
     sse(ii, 1) = sum(sse_i);
 end
 obj(1)= sum(sse);       % initial objective function value
 
 %% store once
 for i = 1:n
-    XX(i) = X(:,i)'* X(:,i);
+    XX(i) = X(:,i)' * X(:,i);
 end
 BB = X*F;       % (d*k)
 aa = sum(F,1);  % diag(F'*F) the data number in each cluster
 FXXF = BB'*BB;  % F'*X'*X*F;
 
 %% main loop
-for iter = 1:200
-    % while any(label ~= last)
-    %     last = label;
+for iter = 1:max_iter
     for i = 1:n
         p = label(i);
         if aa(p) == 1
@@ -80,18 +76,26 @@ for iter = 1:200
     for ii = 1:k
         idxi = find(label == ii);
         Xi = X(:, idxi);
-        m = size(Xi, 2);
         ceni = mean(Xi, 2);
         center1(:,ii) = ceni;
         c2 = ceni'*ceni;
-        sse_i = sum(Xi.^2) + m*c2 - 2*ceni'*Xi;
+        sse_i = sum(Xi.^2) + c2 - 2*ceni'*Xi;
         sse(ii, 1) = sum(sse_i);
+
+        cluster_size(ii) = sum(label == ii);
+        balance_loss_t(ii) = (cluster_size(ii) - n/k)^2;
     end
     obj(iter_num+1) = sum(sse) ;     %  objective function value
+    balance_loss(iter_num) = sum(balance_loss_t);
 end
 runtime = toc(start_time);
-
-disp(['CDKM runtime: ', num2str(runtime)]);
 minO = min(obj);
 Y = label;
+fprintf('CDKM runtime: %.4f seconds, sse: %.4f, balance loss: %.4f\n', runtime, minO, mean(balance_loss(end-4:end)));
+
+size0 = zeros(1, k);
+for ii = 1:k
+    size0(ii) = sum(label == ii);
+end
+% disp(cluster_size);
 end
