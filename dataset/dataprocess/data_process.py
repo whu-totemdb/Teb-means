@@ -93,19 +93,16 @@ def process(config_str, example_config):
 import csv
 
 def process_data(input_file, output_file):
-    # 读取原始数据
     with open(input_file, 'r') as infile:
         reader = csv.reader(infile)
         data = list(reader)
 
-    # 处理数据，去掉冒号和冒号前的数字
     processed_data = []
     feature_names = []
     flag = 1
     for row in data:
-        if not row:  # 跳过空行
+        if not row:
             continue
-        # 处理第一行，生成特征名称
 
         if flag == 1:
             feature_names = ['x{}'.format(i) for i in range(len(row))]
@@ -115,7 +112,6 @@ def process_data(input_file, output_file):
             processed_row = [list(map(float, item.split(":")))[1] if len(item.split(":")) == 2 else item for item in row]
             processed_data.append(processed_row)
 
-    # 将处理后的数据写入新文件
     with open(output_file, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
         writer.writerows(processed_data)
