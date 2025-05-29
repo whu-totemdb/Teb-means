@@ -22,6 +22,19 @@ dataset
 └── rawdata
 ```
 
+The datasets we use are all high-dimensional, with brief information as shown in the list below:
+
+|                           Datasets                           | Dataset Scale | Dimension |                         Description                          |
+| :----------------------------------------------------------: | :-----------: | :-------: | :----------------------------------------------------------: |
+| **[Credit](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)** |     0.28M     |      30     | The T-Drive trajectory dataset contains GPS trajectories of 10,357 taxis in Beijing from February 2 to February 8, 2008. |
+| **[MTG](https://ffiec.cfpb.gov/data-browser/)** |     5.98M     |     53    | A CSV dataset containing taxi trajectories recorded over one year (from 2013/07/01 to 2014/06/30) in the city of Porto, in Portugal. |
+|      **[Census](https://www.argoverse.org/av2.html)**      |    5M     |     69      | Trajectory dataset from Argoverse, recording the trajectory data of autonomous vehicles. |
+| **[Game](https://www.kaggle.com/datasets/artyomkruglov/gaming-profiles-2025-steam-playstation-xbox)** |    3M       |    79       | Point cloud dataset from Argoverse, representing lidar-detected objects surrounding vehicles. |
+| **[Job](https://data.cityofnewyork.us/Housing-Development/DOB-Job-Application-Filings/ic3t-wcy2/about_data)** |    2.7M     |     128        | The 3D-spatial-network dataset is a machine learning dataset that contains 3D road network information of the North Jutland region in Denmark. |
+|            **[Retail](https://www.kaggle.com/datasets/ricgomes/global-fashion-retail-stores-dataset/data?select=customers.csv)**             |      2.7M     |     597   | Shapenet is a widely used point cloud dataset for 3D shape understanding and analysis. |
+|            **[Amazon](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews?select=Reviews.csv)**             |      1.24M      |     2400       | Shapenet is a widely used point cloud dataset for 3D shape understanding and analysis. |
+|            **[MovieLens](https://grouplens.org/datasets/movielens/)**             |     21M      |     5000      | Shapenet is a widely used point cloud dataset for 3D shape understanding and analysis. |
+
 ### 2.2 Data Process
 
 - All the code for data processing is in `./dataset/dataprocess/data_process.py`.
