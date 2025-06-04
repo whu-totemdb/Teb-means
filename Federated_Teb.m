@@ -1,5 +1,5 @@
 
-function [Y, minO, iter_num, sse, obj, balance_loss, runtime, cluster_size] = Teb_Cut(X, label, c, block_size, eta, max_iters)
+function [Y, minO, iter_num, sse, obj, balance_loss, runtime, cluster_size] = Federated_Teb(X, label, c, block_size, eta, max_iters)
 
 % parpool("local",4);
 
