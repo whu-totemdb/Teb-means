@@ -6,7 +6,7 @@ clc
 num_runs = 3;
 
 % 1.comparison algorithms
-methods = {'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'Teb' };
+methods = {'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'Teb','Federated_Teb' };
 
 % 2.datasets
 datasets = {'1-epsilon', '2-svmlight', '3-athlete', '4-Spanish', '5-hmda', '6-census1990', 'ori-disease', 'ori-Crime'};
@@ -134,6 +134,9 @@ for dataset_idx = 1:length(datasets)
                                     [Y_label, ~, iter_num, sse, obj, balance_loss, elapsed_time, size0] = F3KM(X, label, c, block_size, rho, threads, iter);
                                     loss = NaN;
                                 case 'Teb'
+                                    [Y_label, ~, iter_num, sse, obj_max, balance_loss, elapsed_time, size0] = Teb(X, label, c, block_size, eta, iter);
+                                    loss = NaN;
+                                case 'Federated_Teb'
                                     [Y_label, ~, iter_num, sse, obj_max, balance_loss, elapsed_time, size0] = Teb(X, label, c, block_size, eta, iter);
                                     loss = NaN;
                             end
