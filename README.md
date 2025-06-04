@@ -62,7 +62,7 @@ You can run `Teb-means` and all the comparison algorithms in `./run.m`.
 num_runs = 3;
 
 % 1.comparison algorithms
-methods = {'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'Teb' };
+methods = {'Lloyd', 'CDKM', 'FCFC', 'BCLS_ALM', 'F3KM', 'Teb', 'Federated_Teb' };
 
 % 2.datasets
 datasets = {'rename this term into your datasets'};
